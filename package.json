@@ -1,0 +1,22 @@
+{
+  "name": "aoc-2019",
+  "version": "1.0.0",
+  "description": "My Advent of Code 2019 contributions",
+  "author": "Henrik Djärv <henrik@djarv.org>",
+  "license": "UNLICENSED",
+  "bin": "build/index.js",
+  "repository": {
+    "type": "git"
+  },
+  "scripts": {
+    "build": "tsc -p . && chmod +x build/index.js",
+    "check-types": "tsc --noEmit",
+    "start": "yarn build && node build/index.js",
+    "clean": "[[ -d build/ ]] && rm -rf build/ || exit 0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^12.12.14",
+    "typescript": "^3.7.2"
+  }
+}
