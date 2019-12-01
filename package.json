@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "My Advent of Code 2019 contributions",
   "author": "Henrik Djärv <henrik@djarv.org>",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "bin": "build/index.js",
   "repository": {
     "type": "git"
