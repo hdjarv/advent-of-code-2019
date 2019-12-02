@@ -1,23 +1,24 @@
-type Instruction = (memory: Array<number>, instructionPointer: number) => number;
+type Instruction = (memory: number[], instructionPointer: number) => number;
+type Operator = (value1: number, value2: number) => number;
 
-const InstructionSet: { [index: number]: Instruction } = {
-  // add
-  1: (memory: Array<number>, instructionPointer: number): number => {
-    memory[memory[instructionPointer + 3]] =
-      memory[memory[instructionPointer + 1]] + memory[memory[instructionPointer + 2]];
-    return instructionPointer + 4;
-  },
-  // multiply
-  2: (memory: Array<number>, instructionPointer: number): number => {
-    memory[memory[instructionPointer + 3]] =
-      memory[memory[instructionPointer + 1]] * memory[memory[instructionPointer + 2]];
-    return instructionPointer + 4;
-  },
-  // stop
-  99: (_memory: Array<number>, instructionPointer: number): number => instructionPointer
+const Add = (value1: number, value2: number): number => value1 + value2;
+const Multiply = (value1: number, value2: number): number => value1 * value2;
+
+const TwoOpInstruction = (operator: Operator) => (memory: number[], instructionPointer: number): number => {
+  memory[memory[instructionPointer + 3]] = operator(
+    memory[memory[instructionPointer + 1]],
+    memory[memory[instructionPointer + 2]]
+  );
+  return instructionPointer + 4;
 };
 
-export const run = (program: Array<number>, noun: number = 12, verb: number = 2) => {
+const InstructionSet: { [index: number]: Instruction } = {
+  1: TwoOpInstruction(Add),
+  2: TwoOpInstruction(Multiply),
+  99: (_memory: number[], instructionPointer: number): number => instructionPointer // stop
+};
+
+export const run = (program: number[], noun: number = 12, verb: number = 2) => {
   const memory = Array.from(program);
   memory[1] = noun;
   memory[2] = verb;
