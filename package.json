@@ -11,6 +11,7 @@
   },
   "scripts": {
     "build": "tsc -p . && chmod +x build/index.js",
+    "postbuild": "[[ -d inputs ]] && cp -r inputs build/ || exit 0",
     "check-types": "tsc --noEmit",
     "start": "yarn build && node build/index.js",
     "clean": "[[ -d build/ ]] && rm -rf build/ || exit 0"
