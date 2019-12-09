@@ -8,7 +8,7 @@ if (process.argv.length < 3) {
   process.exit(1);
 }
 
-const dayNo = parseInt(process.argv[2], 10);
+const dayNo = Number.parseInt(process.argv[2], 10);
 const dayModule = `day-${dayNo < 10 ? `0${dayNo}` : dayNo}`;
 
 if (!fileExists(join(__dirname, dayModule + ".js"))) {
