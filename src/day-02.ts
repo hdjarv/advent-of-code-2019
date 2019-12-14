@@ -13,13 +13,13 @@ const program = [
 export default async (..._args: any) => {
   program[1] = 12;
   program[2] = 2;
-  console.log(`Part 1: The result is: ${runIntCode(program).mem0}`);
+  console.log(`Part 1: The result is: ${runIntCode(program).memory[0]}`);
 
   outer: for (let noun = 0; noun <= 99; noun++) {
     for (let verb = 0; verb <= 99; verb++) {
       program[1] = noun;
       program[2] = verb;
-      if (runIntCode(program).mem0 === 19690720) {
+      if (runIntCode(program).memory[0] === 19690720) {
         console.log(`Part 2: The result is: ${100 * noun + verb}`);
         break outer;
       }
