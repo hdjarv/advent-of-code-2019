@@ -4,7 +4,8 @@ type JumpCondition = (value: number) => boolean;
 
 enum ParameterMode {
   Position = 0,
-  Immediate = 1
+  Immediate = 1,
+  Relative = 2
 }
 
 export type State = {
@@ -12,6 +13,7 @@ export type State = {
   instructionPointer: number;
   nextInstructionPointer: number;
   parameterModes?: ParameterMode[];
+  relativeBase: number;
   input: number[];
   output: number[];
 };
@@ -43,9 +45,10 @@ const InstructionSet: { [index: number]: Instruction } = {
     const input = state.input.shift();
     if (input === undefined) {
       throw new Error(
-        `No input value to store. Opcode: 3, InstructionPointer: ${state.instructionPointer}, Address: ${
-          state.memory[state.instructionPointer + 1]
-        }`
+        `No input value to store, instructionpointer: ${state.instructionPointer} (..., ${state.memory.slice(
+          state.instructionPointer,
+          state.instructionPointer + 4
+        )}, ...)`
       );
     }
     setParameterValue(state, 1, input);
@@ -59,29 +62,64 @@ const InstructionSet: { [index: number]: Instruction } = {
   6: JumpInstruction(IfZero),
   7: TwoOpInstruction(LessThan),
   8: TwoOpInstruction(Equals),
+  9: (state: State): void => {
+    state.relativeBase += getParameterValue(state, 1);
+    state.nextInstructionPointer = state.instructionPointer + 2;
+  },
   99: (state: State): void => {
     // stop
     state.nextInstructionPointer = state.instructionPointer;
   }
 };
 
-const getParameterValue = (state: State, paramNo: number) => {
-  if (state.parameterModes && paramNo - 1 < state.parameterModes.length) {
-    const paramMode = state.parameterModes[paramNo - 1];
-    if (paramMode === ParameterMode.Immediate) {
-      return state.memory[state.instructionPointer + paramNo];
-    }
-  }
+const getParameterModeForParam = (state: State, paramNo: number): ParameterMode =>
+  state.parameterModes && paramNo - 1 < state.parameterModes.length
+    ? state.parameterModes[paramNo - 1]
+    : ParameterMode.Position;
 
-  return state.memory[state.memory[state.instructionPointer + paramNo]];
+const getMemoryAddressForParam = (state: State, paramNo: number): number => {
+  let paramMode = getParameterModeForParam(state, paramNo);
+  let memAddress = -1;
+  switch (paramMode) {
+    case ParameterMode.Position:
+      memAddress = state.memory[state.instructionPointer + paramNo];
+      break;
+    case ParameterMode.Immediate:
+      memAddress = state.instructionPointer + paramNo;
+      break;
+    case ParameterMode.Relative:
+      memAddress = state.relativeBase + state.memory[state.instructionPointer + paramNo];
+      break;
+    default:
+      throw Error(
+        `Invalid parameter mode: ${paramMode} (..., ${state.memory.slice(
+          state.instructionPointer,
+          state.instructionPointer + 4
+        )}, ...)`
+      );
+  }
+  if (memAddress < 0) {
+    throw Error(
+      `Invalid memory address: ${memAddress} (..., ${state.memory.slice(
+        state.instructionPointer,
+        state.instructionPointer + 4
+      )}, ...)`
+    );
+  }
+  return memAddress;
+};
+
+const getParameterValue = (state: State, paramNo: number) => {
+  const value = state.memory[getMemoryAddressForParam(state, paramNo)];
+  return value === undefined ? 0 : value;
 };
 
 const setParameterValue = (state: State, paramNo: number, value: number): void => {
-  state.memory[state.memory[state.instructionPointer + paramNo]] = value;
+  state.memory[getMemoryAddressForParam(state, paramNo)] = value;
 };
 
 const parseOpcode = (opcode: number): { opcode: number; parameterModes?: ParameterMode[] } =>
-  opcode > 100
+  opcode >= 100
     ? {
         opcode: opcode % 100,
         parameterModes: `${Math.floor(opcode / 100)}`
@@ -124,6 +162,7 @@ export const run = (program: number[], input: number | number[] = [], stopOnOutp
     memory: Array.from(program),
     instructionPointer: 0,
     nextInstructionPointer: 0,
+    relativeBase: 0,
     input: Array.isArray(input) ? input : [input],
     output: []
   };
